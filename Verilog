@@ -1,0 +1,215 @@
+module chess_gen(
+input clk,
+input rst_n,
+input [9:0]  x_pos,
+input [9:0]  y_pos,
+output reg [7:0]     VGA_G     ,
+output reg [7:0]     VGA_B     ,
+output reg [7:0]     VGA_R     ,
+
+//user interface
+input [2:0] red_x_pos, red_y_pos,
+input red_confirm_input,
+input [2:0] blue_x_pos, blue_y_pos,
+input blue_confirm_input
+);
+
+reg [24:0] red_chess_flag,blue_chess_flag;
+reg red_confirm_input_r, blue_confirm_input_r;
+reg red_flag, blue_flag; //draw the chess
+reg red_win, blue_win;
+
+always@(posedge clk)
+begin
+    red_confirm_input_r <= red_confirm_input;
+    blue_confirm_input_r <= blue_confirm_input;
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+    if(rst_n == 1'b0)
+        red_chess_flag <= 25'b0;
+    else if({red_confirm_input_r, red_confirm_input} == 2'b10 && red_y_pos != 0 && red_x_pos != 0)
+        red_chess_flag[5 * red_y_pos + red_x_pos - 6] <= 1'b1;
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+    if(rst_n == 1'b0)
+        red_win <= 1'b0;
+    else if((red_chess_flag[0] & red_chess_flag[1] & red_chess_flag[2] & red_chess_flag[3] & red_chess_flag[4]) ||
+            (red_chess_flag[5] & red_chess_flag[6] & red_chess_flag[7] & red_chess_flag[8] & red_chess_flag[9]) ||
+            (red_chess_flag[10] & red_chess_flag[11] & red_chess_flag[12] & red_chess_flag[13] & red_chess_flag[14]) ||
+            (red_chess_flag[15] & red_chess_flag[16] & red_chess_flag[17] & red_chess_flag[18] & red_chess_flag[19]) ||
+            (red_chess_flag[20] & red_chess_flag[21] & red_chess_flag[22] & red_chess_flag[23] & red_chess_flag[24]) ||
+            (red_chess_flag[0] & red_chess_flag[5] & red_chess_flag[10] & red_chess_flag[15] & red_chess_flag[20]) ||
+            (red_chess_flag[1] & red_chess_flag[6] & red_chess_flag[11] & red_chess_flag[16] & red_chess_flag[21]) ||
+            (red_chess_flag[2] & red_chess_flag[7] & red_chess_flag[12] & red_chess_flag[17] & red_chess_flag[22]) ||
+            (red_chess_flag[3] & red_chess_flag[8] & red_chess_flag[13] & red_chess_flag[18] & red_chess_flag[23]) ||
+            (red_chess_flag[4] & red_chess_flag[9] & red_chess_flag[14] & red_chess_flag[19] & red_chess_flag[24]) ||
+            (red_chess_flag[0] & red_chess_flag[6] & red_chess_flag[12] & red_chess_flag[18] & red_chess_flag[24]) ||
+            (red_chess_flag[20] & red_chess_flag[16] & red_chess_flag[12] & red_chess_flag[8] & red_chess_flag[4]) )
+        red_win <= 1'b1;
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+    if(rst_n == 1'b0)
+        blue_win <= 1'b0;
+    else if((blue_chess_flag[0] & blue_chess_flag[1] & blue_chess_flag[2] & blue_chess_flag[3] & blue_chess_flag[4]) ||
+            (blue_chess_flag[5] & blue_chess_flag[6] & blue_chess_flag[7] & blue_chess_flag[8] & blue_chess_flag[9]) ||
+            (blue_chess_flag[10] & blue_chess_flag[11] & blue_chess_flag[12] & blue_chess_flag[13] & blue_chess_flag[14]) ||
+            (blue_chess_flag[15] & blue_chess_flag[16] & blue_chess_flag[17] & blue_chess_flag[18] & blue_chess_flag[19]) ||
+            (blue_chess_flag[20] & blue_chess_flag[21] & blue_chess_flag[22] & blue_chess_flag[23] & blue_chess_flag[24]) ||
+            (blue_chess_flag[0] & blue_chess_flag[5] & blue_chess_flag[10] & blue_chess_flag[15] & blue_chess_flag[20]) ||
+            (blue_chess_flag[1] & blue_chess_flag[6] & blue_chess_flag[11] & blue_chess_flag[16] & blue_chess_flag[21]) ||
+            (blue_chess_flag[2] & blue_chess_flag[7] & blue_chess_flag[12] & blue_chess_flag[17] & blue_chess_flag[22]) ||
+            (blue_chess_flag[3] & blue_chess_flag[8] & blue_chess_flag[13] & blue_chess_flag[18] & blue_chess_flag[23]) ||
+            (blue_chess_flag[4] & blue_chess_flag[9] & blue_chess_flag[14] & blue_chess_flag[19] & blue_chess_flag[24]) ||
+            (blue_chess_flag[0] & blue_chess_flag[6] & blue_chess_flag[12] & blue_chess_flag[18] & blue_chess_flag[24]) ||
+            (blue_chess_flag[20] & blue_chess_flag[16] & blue_chess_flag[12] & blue_chess_flag[8] & blue_chess_flag[4]) )
+        blue_win <= 1'b1;
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+    if(rst_n == 1'b0)
+        blue_chess_flag <= 25'b0;
+    else if({blue_confirm_input_r, blue_confirm_input} == 2'b10 && blue_y_pos != 0 && blue_x_pos != 0)
+        blue_chess_flag[5 * blue_y_pos + blue_x_pos - 6] <= 1'b1;
+end
+
+//control chess
+parameter X_POS_0 = 170, X_POS_1 = 230, X_POS_2 = 290, X_POS_3 = 350, X_POS_4 = 410;    
+parameter Y_POS_0 = 90, Y_POS_1 = 150, Y_POS_2 = 210, Y_POS_3 = 270, Y_POS_4 = 330;
+
+//draw the table
+always@(posedge clk)
+begin
+    if(
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && red_chess_flag[0]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && red_chess_flag[1]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && red_chess_flag[2]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && red_chess_flag[3]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && red_chess_flag[4]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && red_chess_flag[5]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && red_chess_flag[6]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && red_chess_flag[7]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && red_chess_flag[8]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && red_chess_flag[9]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && red_chess_flag[10]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && red_chess_flag[11]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && red_chess_flag[12]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && red_chess_flag[13]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && red_chess_flag[14]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && red_chess_flag[15]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && red_chess_flag[16]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && red_chess_flag[17]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && red_chess_flag[18]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && red_chess_flag[19]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && red_chess_flag[20]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && red_chess_flag[21]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && red_chess_flag[22]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && red_chess_flag[23]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && red_chess_flag[24]) )
+        red_flag <= 1'b1;
+    else
+        red_flag <= 1'b0;
+end
+
+always@(posedge clk)
+begin
+    if(
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && blue_chess_flag[0]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && blue_chess_flag[1]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && blue_chess_flag[2]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && blue_chess_flag[3]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_0 && y_pos < Y_POS_0 + 60) && blue_chess_flag[4]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && blue_chess_flag[5]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && blue_chess_flag[6]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && blue_chess_flag[7]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && blue_chess_flag[8]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_1 && y_pos < Y_POS_1 + 60) && blue_chess_flag[9]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && blue_chess_flag[10]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && blue_chess_flag[11]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && blue_chess_flag[12]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && blue_chess_flag[13]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_2 && y_pos < Y_POS_2 + 60) && blue_chess_flag[14]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && blue_chess_flag[15]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && blue_chess_flag[16]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && blue_chess_flag[17]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && blue_chess_flag[18]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_3 && y_pos < Y_POS_3 + 60) && blue_chess_flag[19]) ||
+      (( x_pos > X_POS_0 && x_pos < X_POS_0 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && blue_chess_flag[20]) ||
+      (( x_pos > X_POS_1 && x_pos < X_POS_1 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && blue_chess_flag[21]) ||
+      (( x_pos > X_POS_2 && x_pos < X_POS_2 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && blue_chess_flag[22]) ||
+      (( x_pos > X_POS_3 && x_pos < X_POS_3 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && blue_chess_flag[23]) ||
+      (( x_pos > X_POS_4 && x_pos < X_POS_4 + 60) && (y_pos > Y_POS_4 && y_pos < Y_POS_4 + 60) && blue_chess_flag[24]) )
+        blue_flag <= 1'b1;
+    else
+        blue_flag <= 1'b0;
+end
+
+
+always@(posedge clk)
+begin
+    //if(( x_pos > X_POS_0 && x_pos < X_POS_4 + 64) && blue_win)
+    /*if(blue_win)
+    begin
+        VGA_G <= 8'h00;
+        VGA_B <= 8'hFF;
+        VGA_R <= 8'h00;
+    end
+    //else if(( x_pos > X_POS_0 && x_pos < X_POS_4 + 64) && red_win)
+    else if(red_win)
+    begin
+        VGA_G <= 8'h00;
+        VGA_B <= 8'h00;
+        VGA_R <= 8'hFF;
+    end
+    //draw the lines
+    else*/ if( ( x_pos > X_POS_0 && x_pos < X_POS_4 + 60) && (
+        ( y_pos > Y_POS_0 && y_pos < Y_POS_0 + 4) || ( y_pos > Y_POS_1 && y_pos < Y_POS_1 + 4) ||
+        ( y_pos > Y_POS_2 && y_pos < Y_POS_2 + 4) || ( y_pos > Y_POS_3 && y_pos < Y_POS_3 + 4) ||
+        ( y_pos > Y_POS_4 && y_pos < Y_POS_4 + 4) || ( y_pos > Y_POS_4 + 60 && y_pos < Y_POS_4 + 64)
+    ))
+    begin
+        VGA_G <= 8'hFF;
+        VGA_B <= 8'h00;
+        VGA_R <= 8'h00;
+    end
+    else if( ( y_pos > Y_POS_0 && y_pos < Y_POS_4 + 60) && (
+        ( x_pos > X_POS_0 && x_pos < X_POS_0 + 4) || ( x_pos > X_POS_1 && x_pos < X_POS_1 + 4) ||
+        ( x_pos > X_POS_2 && x_pos < X_POS_2 + 4) || ( x_pos > X_POS_3 && x_pos < X_POS_3 + 4) ||
+        ( x_pos > X_POS_4 && x_pos < X_POS_4 + 4) || ( x_pos > X_POS_4 + 60 && x_pos < X_POS_4 + 64)
+    ))
+    begin
+        VGA_G <= 8'hFF;
+        VGA_B <= 8'h00;
+        VGA_R <= 8'h00;
+    end
+    //draw the chess
+    else if(blue_flag)
+    begin
+        VGA_G <= 8'h00;
+        VGA_B <= 8'hFF;
+        VGA_R <= 8'h00;
+    end
+    else if(red_flag)
+    begin
+        VGA_G <= 8'h00;
+        VGA_B <= 8'h00;
+        VGA_R <= 8'hFF;
+    end
+    else
+    begin
+        VGA_G <= 8'h00;
+        VGA_B <= blue_win ? 8'hff : 8'h00;
+        VGA_R <= red_win ? 8'hff : 8'h00;
+    end
+end
+
+
+endmodule
+
+

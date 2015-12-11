@@ -1,0 +1,54 @@
+module chess_game (
+input             sys_clk   ,
+input             sys_rst_n ,
+input [2:0] red_x_pos, red_y_pos,
+input red_confirm_input,
+input [2:0] blue_x_pos, blue_y_pos,
+input blue_confirm_input,                       
+output  wire      Hs        ,
+output sync,
+output blank,
+output vga_clk,
+output  wire      Vs        ,
+output  [7:0]      VGA_G     ,
+output  [7:0]      VGA_B     ,
+output  [7:0]      VGA_R      );
+
+
+//Wire define 
+wire  [9:0]      ADDRH;
+wire  [9:0]      ADDRV;
+wire             clk_25m;
+reg cnt;
+always@(posedge sys_clk)
+	cnt <= ~cnt;
+assign vga_clk = clk_25m;
+VGA_control VGA_control(
+    .iCLK(cnt )  ,
+    .iRST_N(sys_rst_n),
+    .oCurrent_X(ADDRH ),
+    .oCurrent_Y(ADDRV),       
+    .oVGA_HS(Hs),
+    .oVGA_VS(Vs),
+    .oVGA_SYNC(sync),
+    .oVGA_BLANK(blank),
+    .oVGA_CLOCK(clk_25m)
+    );
+
+chess_gen chess_gen(
+    .clk(clk_25m),
+    .rst_n(sys_rst_n),
+    .x_pos(ADDRH),
+    .y_pos(ADDRV),
+    .VGA_G(VGA_G     ),
+    .VGA_B(VGA_B     ),
+    .VGA_R(VGA_R     ),
+    .red_x_pos(red_x_pos), 
+    .red_y_pos(red_y_pos),
+    .red_confirm_input(red_confirm_input),
+    .blue_x_pos(blue_x_pos), 
+    .blue_y_pos(blue_y_pos),
+    .blue_confirm_input(blue_confirm_input)
+    );
+    
+endmodule  
